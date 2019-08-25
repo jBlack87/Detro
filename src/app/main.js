@@ -1,7 +1,6 @@
 import {init, GameLoop, Sprite, initKeys, keyPressed} from 'kontra'
 import pawnIdle from './assets/pawn_idle.png';
 
-
 initKeys();
 let { canvas,context } = init();
 
@@ -9,6 +8,61 @@ let { canvas,context } = init();
 //
 // Define World Params and state methods
 //
+let music = {
+    fire:function(){
+        (function () {
+            let a = new AudioContext
+            let G=a.createGain()
+            let D = [];
+            for(let i in D=[21,22])
+            {
+              let o = a.createOscillator()
+              if(D[i])
+              {
+                  o.connect(G)
+                  G.connect(a.destination)
+                  o.start(i*.1)
+                  o.frequency.setValueAtTime(200*1.06**(13-D[i]),i*.1)
+                  
+                  G.gain.setValueAtTime(1,i*.1)
+                  G.gain.setTargetAtTime(.0001,i*.1+.08,.005)
+                  o.stop(i*.1+.09);
+              }
+            }
+          
+          })();
+          
+          
+
+    },
+    bgmusic:function(){
+        (function () {
+            let a = new AudioContext
+            let G=a.createGain()
+            let D = [];
+            for(let i in D=[17,18,17,18,17,,19,20,19,20,19,20,,18,19,18,19,18,19])
+            {
+              let o = a.createOscillator()
+              if(D[i])
+              {
+                  o.connect(G)
+                  G.connect(a.destination)
+                  o.start(i*.1)
+                  o.frequency.setValueAtTime(150*1.06**(13-D[i]),i*.1)
+                  o.type='triangle'
+                  G.gain.setValueAtTime(1,i*.1)
+                  G.gain.setTargetAtTime(.0001,i*.1+.08,.005)
+                  o.stop(i*.1+.09);
+              }
+            }
+          
+          })();
+          
+          
+    }
+};
+
+music.bgmusic();
 
 let world = {
     params:{
@@ -76,6 +130,17 @@ let pawn = Sprite({
     weight:1,
     
 });
+
+let enemy1 = Sprite({
+    x:canvas.width,
+    y:0,
+    width:20,
+    height:20,
+    v_speed:0,
+    h_speed:0,
+    weight:1
+});
+
 
 world.gravityBoundObjects.push(pawn);
 
@@ -152,7 +217,8 @@ let loop = GameLoop({  // create the main game loop
                 y:pawn.y+10
             });
             world.gravityBoundObjects.push(bullet.sprite);
-
+            // fire gun
+            music.fire();
             world.bullets.push(bullet);
         }
 
