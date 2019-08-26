@@ -89,15 +89,16 @@ let world = {
         },
         createFormation:function() {
             var origin = {
-                x:rand.range(0,canvas.width),
-                y:rand.range(0,canvas.height),
+                x:rand.range(100,canvas.width/1.2),
+                y:rand.range(100,canvas.height/1.2),
             };
-            var gridCount = 15;
+            var seed = rand.int(1000);
+            var gridCount = rand.int(20);
             for(var i = 3; i < gridCount; i++) {
                     let params = {
-                        x:origin.x+(origin.x * Math.cos(2 * Math.PI * i / gridCount))/5,
-                        y:origin.y +(origin.y * Math.sin(2 * Math.PI * i / gridCount))/5,
-                        theta_increment: (2*Math.PI),
+                        x:origin.x+(seed * Math.cos(2 * Math.PI * i / gridCount))/5,
+                        y:origin.y +(seed * Math.sin(2 * Math.PI * i / gridCount))/5,
+                        theta_increment: (seed*Math.PI),
                         tcos:i,
                         tsin:0,
                         h_speed:-1*i,
@@ -108,6 +109,7 @@ let world = {
                     world.enemyAI.enemyA.create(params);
             }
         },
+        
         enemyAIUpdate:function(){
             for(let enemyID in world.enemies) {
                 let enemy = world.enemies[enemyID];
@@ -121,8 +123,8 @@ let world = {
                     Ncos = (enemy.alpha * enemy.tcos) + (enemy.beta * enemy.tsin);
                     Nsin = (enemy.alpha * enemy.tsin) + (enemy.beta * enemy.tcos);
                     
-                    enemy.sprite.x = enemy.sprite.x + ((enemy.sprite.h_speed*Ncos) *-Math.cos(2 * Math.PI * enemy.theta_increment / world.enemies.length))/10 ;
-                    enemy.sprite.y = enemy.sprite.y + ( (enemy.sprite.h_speed*Nsin) *-Math.cos(2 * Math.PI * enemy.theta_increment / world.enemies.length))/10;
+                    enemy.sprite.x = enemy.sprite.x + ((enemy.sprite.h_speed*Ncos) *-Math.cos(2 * Math.PI * enemy.theta_increment / world.enemies.length))/100 ;
+                    enemy.sprite.y = enemy.sprite.y + ( (enemy.sprite.h_speed*Nsin) *-Math.cos(2 * Math.PI * enemy.theta_increment / world.enemies.length))/100;
                     
                    
                 }
