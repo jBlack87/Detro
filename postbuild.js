@@ -38,6 +38,7 @@ archive.append(
   fs.createReadStream('./dist/index.html'), {
     name: 'index.html'
   }
-)
+);
+archive.directory('./dist/assets','assets','assets');
 
 archive.finalize()

@@ -19,11 +19,17 @@ module.exports = {
           }
         ]
       },
+     
       {
         test: /\.(png|svg|svgz|jpg|gif)$/,
-         use: [
-           'file-loader'
-         ]
+         
+        loader:'file-loader',
+        options:{
+          name:"assets/[name].[ext]",
+          limit:10000
+        }
+           
+         
       }
     ]
   },
