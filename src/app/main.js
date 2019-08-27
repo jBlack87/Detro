@@ -26,42 +26,53 @@ let world = {
     // 
     //
     checkForCollisions:function(){
-
         // check for collisions between enemies and bullets
         for(var enemyID in world.enemies){
-            for(var bulletID in world.bullets){
-                if(world.bullets[bulletID].sprite.collidesWith(world.enemies[enemyID].sprite)){
-                    world.enemyAI.enemyA.explode(world.enemies[enemyID]);
-                    world.bullets.splice(bulletID,1);
-                    world.enemies.splice(enemyID,1);
-                    gameAudio.enemyDie1();
-                    world.enemyAI.increaseDificulty();
+
+            if(typeof world.enemies[enemyID] != 'undefined') {
+                
+                if (world.enemies[enemyID].sprite.collidesWith(pawn)) {
+                    console.log('DEAD');
                 }
+            }
+
+            for(var bulletID in world.bullets){
+                if(typeof world.bullets[bulletID] !='undefined' && typeof world.enemies[enemyID] != 'undefined') {
+                    if(world.bullets[bulletID].sprite.collidesWith(world.enemies[enemyID].sprite)){
+                        world.enemyAI.enemyA.explode(world.enemies[enemyID]);
+                        world.bullets.splice(bulletID,1);
+                        world.enemies.splice(enemyID,1);
+                        gameAudio.enemyDie1();
+                        world.enemyAI.increaseDificulty();
+                    }
+                }
+                
+                
             }
         }
 
  // check for collisions between enemies and bullets
-        for(var enemyID in world.enemies){
-            if(world.enemies[enemyID].sprite.collidesWith(pawn)){
+        // for(var enemyID in world.enemies){
+        //     if(world.enemies[enemyID].sprite.collidesWith(pawn)){
                 
-                world.enemyAI.enemyA.explode(world.enemies[enemyID].sprite);
-                gameAudio.pawnDie();
-                pawn.die = true;
+        //         world.enemyAI.enemyA.explode(world.enemies[enemyID].sprite);
+        //         gameAudio.pawnDie();
+        //         pawn.die = true;
 
-            }
-        }
-         // check for collisions between enemies and bullets
-        for(var bulletID in world.bullets){
-            if(pawn.collidesWith(world.bullets[bulletID].sprite)){
-                pawn.x = canvas.width/2;
-                pawn.y = 0;
-                world.enemyAI.enemyA.explode(pawn);
-                world.bullets.splice(bulletID,1);
-                gameAudio.pawnDie();
-                pawn.die = true;
+        //     }
+        // }
+        //  // check for collisions between enemies and bullets
+        // for(var bulletID in world.bullets){
+        //     if(pawn.collidesWith(world.bullets[bulletID].sprite)){
+        //         pawn.x = canvas.width/2;
+        //         pawn.y = 0;
+        //         world.enemyAI.enemyA.explode(pawn);
+        //         world.bullets.splice(bulletID,1);
+        //         gameAudio.pawnDie();
+        //         pawn.die = true;
 
-            }
-        }
+        //     }
+        // }
 
 
     },
@@ -227,11 +238,11 @@ let pawn = Sprite({
     y:0,
     width:40,
     height:50,
-    anchor:{
-        x:0.5,
-        y:0.5,
-    },
-
+    // anchor:{
+    //     x:0.5,
+    //     y:0.5,
+    // },
+    color:'rgba(255,255,255,1)',
     // custom params
     v_speed:0,
     h_speed:0,
@@ -311,7 +322,7 @@ class Bullet {
 let image = new Image();
 image.src = pawnIdle;
 image.onload = function() {
-    pawn.image = image;
+   // pawn.image = image;
 
 };
 
