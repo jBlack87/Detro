@@ -26,6 +26,26 @@ let gameAudio = {
           
 
     },
+    pawnDie:function() {
+      (function () {
+        let a = new AudioContext
+  
+        let D = [];
+        for(let i in D=[[9,1],[9,3],[10,2],[12,4],[13,5],[15,6],[16,7],[16,14],[17,8],[17,13],[17,15],[18,12],[19,8],[19,16],[20,9],[20,11],[21,10],[24,17]])
+        {
+          let o = a.createOscillator()
+          if(D[i])
+          {
+              o.connect(a.destination)
+              o.frequency.value=100*1.06**(14-D[i][0])
+              o.type='square'
+              o.start(D[i][1]*.08)
+              o.stop(D[i][1]*.08+.08);
+          }
+        }
+      })();
+      
+    },
     enemyDie1:function() {
         (function () {
             let a = new AudioContext
