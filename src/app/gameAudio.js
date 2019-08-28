@@ -26,24 +26,45 @@ let gameAudio = {
           
 
     },
+    powerup:function(){
+      (function () {
+        let a = new AudioContext
+  
+        let D = [];
+        for(let i in D=[[5,3],[7,2],[7,3],[8,2],[11,2],[12,1],[16,3],[17,3],[18,3],[20,1],[21,1],[22,1]])
+        {
+          let o = a.createOscillator()
+          if(D[i])
+          {
+              o.connect(a.destination)
+              o.frequency.value=280*1.06**(14-D[i][0])
+              o.type='square'
+              o.start(D[i][1]*.1)
+              o.stop(D[i][1]*.1+.1);
+          }
+        }
+      })();
+      
+    },
     pawnDie:function() {
       (function () {
         let a = new AudioContext
   
         let D = [];
-        for(let i in D=[[9,1],[9,3],[10,2],[12,4],[13,5],[15,6],[16,7],[16,14],[17,8],[17,13],[17,15],[18,12],[19,8],[19,16],[20,9],[20,11],[21,10],[24,17]])
+        for(let i in D=[[24,1],[25,1],[25,2]])
         {
           let o = a.createOscillator()
           if(D[i])
           {
               o.connect(a.destination)
               o.frequency.value=100*1.06**(14-D[i][0])
-              o.type='square'
-              o.start(D[i][1]*.08)
-              o.stop(D[i][1]*.08+.08);
+              o.type='sawtooth'
+              o.start(D[i][1]*.2)
+              o.stop(D[i][1]*.2+.2);
           }
         }
       })();
+      
       
     },
     enemyDie1:function() {

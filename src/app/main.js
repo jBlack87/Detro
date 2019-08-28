@@ -1,7 +1,9 @@
-import {init, GameLoop, Sprite, initKeys, keyPressed, on} from 'kontra'
+import {init, GameLoop, Sprite,SpriteSheet, initKeys, keyPressed, on} from 'kontra'
 import pawnIdle from './assets/pawn_idle.png';
 import gameAudio from './gameAudio';
 import rand from './rand';
+import fontSheet from './assets/number-sheet.png';
+import powerupIdle from './assets/powerup.png';
 
 initKeys();
 let { canvas,context } = init();
@@ -21,6 +23,41 @@ let world = {
         pawnStart:{
             x:canvas.width/2,
             y:0,
+        }
+    },
+    randomNum:rand.int(canvas.width),
+    bgSprites:[],
+    initBGSprites:function(){
+        var gridCount = 500;
+        for(var i = 0; i < gridCount; i++){
+            var size = rand.range(2,8);
+            var opacity = rand.range(0.4,1);
+            var originx = rand.range(0,canvas.width);
+            var originy = rand.range(0,canvas.height);
+            this.bgSprites.push(Sprite({
+                x:originx,
+                y:originy,
+                originx:originx,
+                originy:originy,
+                color:'RGBA(143, 214, 255,'+opacity+')',
+                width:size,
+                speed:rand.int(10),
+                height:size,
+                randomNum:rand.int(8),
+            }));
+
+        }
+    },
+    renderBGSprites:function(){
+
+        for(var i in world.bgSprites){
+            var spark = world.bgSprites[i];
+
+            //spark.x = spark.x+(spark.randomNum)*world.randomNum;
+           // spark.y = spark.y+(Math.cos( world.frameCount/25)*30 * Math.cos(2 * Math.PI * 2 / (100)));
+          // console.log(spark.y);
+          spark.y = spark.originy+(Math.abs(pawn.y/25)*spark.speed);
+            spark.render();
         }
     },
 
@@ -68,6 +105,17 @@ let world = {
     // 
     //
     checkForCollisions:function(){
+
+
+        if(pawn.collidesWith(powerup.sprite) && powerup.active){
+            pawn.hasPowerup = true;
+            pawn.activatePowerup();
+            powerup.active = false;
+            gameAudio.powerup();
+        }
+
+
+
         // check for collisions between enemies and bullets
         for(var enemyID in world.enemies){
 
@@ -99,10 +147,16 @@ let world = {
 
                     if(world.bullets[bulletID].sprite.collidesWith(world.enemies[enemyID].sprite)){
                         world.enemyAI.enemyA.explode(world.enemies[enemyID]);
+                       
+                        world.createKillPoints(world.enemyAI.enemyPointValue[world.enemies[enemyID].sprite.type],{x:world.enemies[enemyID].sprite.x,y:world.enemies[enemyID].sprite.y});
+                       
                         world.bullets.splice(bulletID,1);
                         world.enemies.splice(enemyID,1);
                         gameAudio.enemyDie1();
                         world.enemyAI.increaseDificulty();
+                        
+                        world.score +=100;
+
                     }
                 }
                 
@@ -114,10 +168,64 @@ let world = {
 
 
     },
+    //
+    // Setup Kill Point Notice
+    //
+    killPoints:[],
+    createKillPoints:function(points,origin){
+
+        var scoreString = String(points);
+
+        scoreString = scoreString.split("");
+
+        scoreString.reverse();
+        var killPointArray = [];
+        
+
+        for(var i = 0; i <scoreString.length;i++) {
+            killPointArray[i] = Sprite({
+                x: origin.x-(i*21),
+                width:20,
+                height:21,
+                y: origin.y,
+                opacity:1,
+            
+                // use the sprite sheet animations for the sprite
+                animations: world.fontSheet.animations
+              });
+              killPointArray[i].playAnimation('f_0');
+        }
+
+        for(var i = 0; i < scoreString.length; i++) {
+            killPointArray[parseInt(i)].playAnimation('f_'+scoreString[i]);
+        }
+        world.killPoints.push(killPointArray);
+    },
+    renderKillPoints:function(){
+        for(var i in world.killPoints){
+            var kp = world.killPoints[i];
+            for(var id in kp){
+                if(kp[id].opacity>0){
+                kp[id].y -=5;
+                kp[id].opacity -= 0.04; 
+              
+                  
+                kp[id].render();
+                } else {
+                    world.killPoints.splice(i,1);
+                }
+            }
+        }
+    },
 
     // EnemyAI Logic
     //
     enemyAI:{
+        enemyPointValue:{
+            enemyA:199,
+            enemyB:500,
+            enemyC:1337
+        },
         enemyA:{
             create:function(params){
                 
@@ -155,10 +263,13 @@ let world = {
         },
         increaseDificulty:function(){
             if(world.enemies.length<10){
-                if(rand.int(2)<2) {
+                var seed = rand.int(3);
+                if(seed<2) {
                     world.enemyAI.createFormation2();
+                } else if(seed >2){
+
                 } else {
-                    world.enemyAI.createFormation();
+                    world.enemyAI.createFormation3();
             
                 }
             }
@@ -204,6 +315,7 @@ let world = {
                 color_r:190,
                 color_g:50,
                 color_b:252,
+                type:'enemyB'
             };
 
             var seed = rand.int(1000);
@@ -213,6 +325,40 @@ let world = {
                         width:rand.range(8,15),
                         height:rand.range(8,15),
                         x:origin.x+(seed * Math.cos(seed * Math.PI * i / gridCount) * Math.sin(seed * Math.PI * i / gridCount))/5,
+                        y:origin.y+(seed * Math.sin(seed * Math.PI * i / gridCount))/5,
+                        theta_increment: (seed*Math.PI),
+                        tcos:i,
+                        tsin:0,
+                        h_speed:-1*i,
+                        v_speed:1,
+                        beta:Math.sin(2*Math.PI),
+                        alpha:Math.sin((2*Math.PI)/2),
+                        color_r:origin.color_r,
+                        color_g:origin.color_g - (15*i),
+                        color_b:origin.color_b - (15*i),
+                        color_a:1,
+                    }
+
+                    world.enemyAI.enemyA.create(params);
+            }
+        },
+        createFormation3:function(){
+            var origin = {
+                x:rand.range(100,canvas.width/1.2),
+                y:rand.range(100,canvas.height/1.2),
+                color_r:190,
+                color_g:214,
+                color_b:0,
+                type:'enemyC'
+            };
+
+            var seed = rand.int(1000);
+            var gridCount = rand.int(20);
+            for(var i = 3; i < gridCount; i++) {
+                    let params = {
+                        width:rand.range(8,15),
+                        height:rand.range(8,15),
+                        x:(origin.x)+i*15,
                         y:origin.y+(seed * Math.sin(seed * Math.PI * i / gridCount))/5,
                         theta_increment: (seed*Math.PI),
                         tcos:i,
@@ -248,6 +394,12 @@ let world = {
                     enemy.sprite.y = enemy.sprite.y + ( (enemy.sprite.h_speed*Nsin) *-Math.cos(2 * Math.PI * enemy.theta_increment / world.enemies.length))/100;
                     enemy.sprite.update();
                    
+                }
+                if(enemy.sprite.type =='enemyC'){
+                    enemy.sprite.y = enemy.sprite.original_y+(Math.cos( world.frameCount/25)*30 * Math.cos(2 * Math.PI * enemyID / (world.enemies.length/2)));
+                    
+                    
+
                 }
             }
         },
@@ -314,6 +466,160 @@ on('tick',function(){
     world.frameCount ++;
 });
 
+
+//
+// Define Power Up
+//
+
+let powerup = {
+    active:false,
+    sprite:Sprite({
+        x:0,
+        y:100,
+        width:14,
+        height:40,
+        randomNum:rand.int(8.42),
+        originx:0,
+        originy:0,
+    }),
+    sparkles:[
+        Sprite({
+            x:0,
+            y:0,
+            color:'RGBA(143, 214, 255, 1.00)',
+            width:2,
+            height:2,
+            randomNum:rand.int(10),
+        }),
+        Sprite({
+            x:0,
+            y:0,
+            color:'RGBA(143, 214, 255, 1.00)',
+            width:2,
+            height:2,
+            randomNum:rand.int(10),
+
+        }),
+        Sprite({
+            x:0,
+            y:0,
+            color:'RGBA(143, 214, 255, 1.00)',
+            width:2,
+            height:2,
+            randomNum:rand.int(10),
+
+        }),
+        Sprite({
+            x:0,
+            y:0,
+            color:'RGBA(143, 214, 255, 1.00)',
+            width:2,
+            height:2,
+            randomNum:rand.int(10),
+
+        }),
+        Sprite({
+            x:0,
+            y:0,
+            color:'RGBA(143, 214, 255, 1.00)',
+            width:2,
+            height:2,
+            randomNum:rand.int(10),
+
+        }),
+        Sprite({
+            x:0,
+            y:0,
+            color:'RGBA(143, 214, 255, 1.00)',
+            width:5,
+            height:5,
+            randomNum:rand.int(10),
+
+        }),
+        Sprite({
+            x:0,
+            y:0,
+            color:'RGBA(143, 214, 255, 1.00)',
+            width:5,
+            height:5,
+            randomNum:rand.int(10),
+
+        }),
+        Sprite({
+            x:0,
+            y:0,
+            color:'RGBA(143, 214, 255, 1.00)',
+            width:5,
+            height:5,
+            randomNum:rand.int(10),
+
+        }),
+        Sprite({
+            x:0,
+            y:0,
+            color:'RGBA(143, 214, 255, 1.00)',
+            width:5,
+            height:5,
+            randomNum:rand.int(10),
+
+        }),
+        Sprite({
+            x:0,
+            y:0,
+            color:'RGBA(143, 214, 255, 0.5)',
+            width:2,
+            height:2,
+            randomNum:rand.int(10),
+
+        }),
+        Sprite({
+            x:0,
+            y:0,
+            color:'RGBA(143, 214, 255, .5)',
+            width:5,
+            height:5,
+            randomNum:rand.int(10),
+
+        }),
+        Sprite({
+            x:0,
+            y:0,
+            color:'RGBA(143, 214, 255, 1.00)',
+            width:2,
+            height:2,
+            randomNum:rand.int(10),
+
+        }),
+    ],
+    showPowerup:function(origin){
+        powerup.active = true;
+        powerup.sprite.x = origin.x;
+        powerup.sprite.y = origin.y;
+        powerup.sprite.originx = origin.x;
+        powerup.sprite.originy = origin.y;
+        
+        console.log(powerup);
+    },
+    renderPowerup:function(){
+        if(powerup.active) {
+            powerup.sprite.y = powerup.sprite.originy+(Math.cos( world.frameCount/25)*30 * Math.cos(2 * Math.PI * 2 / (10)));
+            powerup.sprite.render();
+
+            var loc = {
+                x:powerup.sprite.x,
+                y:powerup.sprite.y
+            };
+            var randomNum = powerup.sprite.randNum;
+            for(var i in powerup.sparkles){
+                var spark = powerup.sparkles[i];
+                spark.x = -15+loc.x+(spark.randomNum)*powerup.sprite.randomNum;
+                spark.y = loc.y+(3*i)+(Math.cos( world.frameCount/25)*30 * Math.cos(2 * Math.PI * 2 / (10)));
+                spark.render();
+            }
+        }
+    }
+};
+
 //
 // Define Game Entities
 //
@@ -336,6 +642,9 @@ let pawn = Sprite({
     fireDelayCount:0,
     type:'pawn',
     alive:true,
+    activatePowerup:function(){
+
+    },
     death:function() {
         let particleCount = 10;
 
@@ -363,7 +672,7 @@ let pawn = Sprite({
 
 class EnemyA {
     constructor(params){
-
+        if(!params.type) params.type = 'enemyA';
         this.sprite = Sprite({
             width:params.width,
             height:params.height,
@@ -381,7 +690,7 @@ class EnemyA {
             v_speed:params.v_speed,
             h_speed:params.h_speed,
             weight:0.1,
-            type:'enemyA',
+            type:params.type,
         });
         this.theta_increment = params.theta_increment;
         this.tcos = params.tcos;
@@ -397,7 +706,7 @@ world.gravityBoundObjects.push(pawn);
 
 
 // get started, temp enemy generation
-world.enemyAI.createFormation();
+world.enemyAI.createFormation3();
 
 
 
@@ -433,7 +742,93 @@ image.onload = function() {
 
 };
 
+let powerupImage = new Image();
 
+powerupImage.src = powerupIdle;
+powerupImage.onload = function(){
+    powerup.sprite.image = powerupImage;
+    powerup.showPowerup({x:canvas.width/3,y:canvas.width/3});
+
+}
+
+let fontSheetImage = new Image();
+fontSheetImage.src = fontSheet;
+fontSheetImage.onload = function() {
+    world.fontSheet = SpriteSheet({
+        image: fontSheetImage,
+        frameWidth: 21,
+        frameHeight: 26,
+        frameMargin:1,
+      });
+
+      world.fontSheet.createAnimations({
+        f_1: {
+            frames: [0], 
+          },
+        f_2:{
+            frames:[1],
+        },
+        f_3:{
+            frames:[2],
+        },
+        f_4: {
+            frames:[3]
+        },
+        f_5: {
+            frames: [4], 
+          },
+        f_6:{
+            frames:[5],
+        },
+        f_7:{
+            frames:[6],
+        },
+        f_8: {
+            frames:[7]
+        },
+        f_9: {
+            frames:[8]
+        },
+        f_0: {
+            frames:[9]
+        },
+      });
+
+
+world.scoreSprite = [];
+      var origin = {
+          x:200,
+          y:100
+      };
+    for(var i = 0; i <6;i++) {
+        world.scoreSprite[i] = Sprite({
+            x: origin.x-(i*21),
+            y: origin.y,
+        
+            // use the sprite sheet animations for the sprite
+            animations: world.fontSheet.animations
+          });
+          world.scoreSprite[i].playAnimation('f_0');
+    }
+
+
+    world.updateScoreSprite = function(){
+
+        var scoreString = String(world.score);
+
+        scoreString = scoreString.split("");
+
+        scoreString.reverse();
+        for(var i = 0; i < scoreString.length; i++) {
+            world.scoreSprite[parseInt(i)].playAnimation('f_'+scoreString[i]);
+        }
+    }
+
+   
+
+  
+
+};
 
 
 
@@ -543,11 +938,7 @@ class Dot {
     display()
         {
             
-            // noFill();
-            // stroke(126);
-            // ellipse(x,y,5,5);
-            
-            this.sprite.render();
+             this.sprite.render();
 
             // stroke(#0090a1);
             // point(x+10*randNum,y+5*randNum);
@@ -580,14 +971,10 @@ class Dot {
     
     };
 
-visgrid.start();
+//visgrid.start();
 
 
-
-
-
-
-
+world.initBGSprites();
 
 //
 // Game Loop
@@ -668,7 +1055,9 @@ let loop = GameLoop({  // create the main game loop
       // collision checks 
       world.checkForCollisions();
 
-
+      if(world.scoreSprite) {
+        world.updateScoreSprite();
+      }
        
 
 
@@ -701,15 +1090,26 @@ let loop = GameLoop({  // create the main game loop
         }
           world.level[ent].render();
       }
-     
-      
+     if(world.scoreSprite) {
+         for(var i in world.scoreSprite) {
+            world.scoreSprite[i].render();
 
-      // render the visgrid
-      for(var i in visgrid.dots)
-        {
-            visgrid.dots[i].display();
-            visgrid.dots[i].move();
-        }
+         }
+     }
+     // render powerup
+     powerup.renderPowerup();
+     
+     // render background sparks 
+     world.renderBGSprites();
+     // render kill points 
+     world.renderKillPoints();
+
+    //   // render the visgrid
+    //   for(var i in visgrid.dots)
+    //     {
+    //         visgrid.dots[i].display();
+    //         visgrid.dots[i].move();
+    //     }
     }
   });
   
