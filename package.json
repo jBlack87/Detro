@@ -20,6 +20,7 @@
     "webpack-dev-server": "^3.1.5"
   },
   "dependencies": {
-    "kontra": "^6.4.0"
+    "kontra": "^6.4.0",
+    "stats.js": "^0.17.0"
   }
 }
