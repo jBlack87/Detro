@@ -4,6 +4,7 @@ import gameAudio from './gameAudio';
 import rand from './rand';
 import fontSheet from './assets/number-sheet.png';
 import powerupIdle from './assets/powerup.png';
+import lifeIdle from './assets/life.png';
 
 initKeys();
 let { canvas,context } = init();
@@ -25,12 +26,53 @@ let world = {
             y:0,
         }
     },
+    lifeSprites:[],
+    updateLives:function(){
+        var origin = {
+            x:200,
+            y:150
+        };
+        this.lifeSprites = [];
+        for(var i = 0; i < pawn.lives;i++){
+            this.lifeSprites.push(Sprite({
+                x:origin.x-(25*i),
+                y:origin.y,
+                image:lifeImage
+            }));
+        }
+    },
+    initPlayer:function(){
+        pawn.alive = true;
+        pawn.x = canvas.width/2;
+        pawn.y = 0;
+        world.bullets = [];
+
+    },
+    restartGame:function(){
+        pawn.alive = true;
+        world.gameOver = false;
+        pawn.x = canvas.width/2;
+        pawn.y = 0;
+        world.score = 0;
+        pawn.lives = 3;
+        for(var i = 0; i < 8; i++) {
+            world.scoreSprite[parseInt(i)].playAnimation('f_0');
+        }
+        world.bullets = [];
+        world.enemies = [];
+        this.enemyAI.createFormation();
+        world.updateLives();
+        
+    },
     randomNum:rand.int(canvas.width),
+    //
+    // setup background sprites
+    //
     bgSprites:[],
     initBGSprites:function(){
         var gridCount = 500;
         for(var i = 0; i < gridCount; i++){
-            var size = rand.range(2,8);
+            var size = rand.range(2,4);
             var opacity = rand.range(0.4,1);
             var originx = rand.range(0,canvas.width);
             var originy = rand.range(0,canvas.height);
@@ -147,15 +189,30 @@ let world = {
 
                     if(world.bullets[bulletID].sprite.collidesWith(world.enemies[enemyID].sprite)){
                         world.enemyAI.enemyA.explode(world.enemies[enemyID]);
-                       
-                        world.createKillPoints(world.enemyAI.enemyPointValue[world.enemies[enemyID].sprite.type],{x:world.enemies[enemyID].sprite.x,y:world.enemies[enemyID].sprite.y});
+                        
+                        if(pawn.comboCounter>0){
+                            pawn.comboTimes +=1;
+
+                        }
+                        pawn.comboCounter +=30;
+                        if(pawn.comboTimes >15) {
+                            gameAudio.freeLife();
+                            pawn.comboTimes = 1;
+                            pawn.comboCounter = 0;
+                            pawn.lives +=1;
+                            world.updateLives();
+                        }
+
+                        world.createKillPoints(world.enemyAI.enemyPointValue[world.enemies[enemyID].sprite.type]*pawn.comboTimes,{x:world.enemies[enemyID].sprite.x,y:world.enemies[enemyID].sprite.y});
+                        world.score +=world.enemyAI.enemyPointValue[world.enemies[enemyID].sprite.type]*pawn.comboTimes;
                        
                         world.bullets.splice(bulletID,1);
                         world.enemies.splice(enemyID,1);
-                        gameAudio.enemyDie1();
+
+                        gameAudio.enemyDie1(pawn.comboTimes);
+
                         world.enemyAI.increaseDificulty();
                         
-                        world.score +=100;
 
                     }
                 }
@@ -263,10 +320,11 @@ let world = {
         },
         increaseDificulty:function(){
             if(world.enemies.length<10){
-                var seed = rand.int(3);
+                var seed = rand.int(4);
                 if(seed<2) {
-                    world.enemyAI.createFormation2();
-                } else if(seed >2){
+                    world.enemyAI.createFormation();
+                } else if(seed >3 && seed <4){
+                    world.enemyAI.createFormation3();
 
                 } else {
                     world.enemyAI.createFormation3();
@@ -277,15 +335,15 @@ let world = {
         },
         createFormation:function() {
             var origin = {
-                x:rand.range(100,canvas.width/1.2),
-                y:rand.range(100,canvas.height/1.2),
+                x:rand.range(100,canvas.width/1.5),
+                y:rand.range(100,canvas.height/1.5),
                 color_r:0,
                 color_g:191,
                 color_b:252,
             };
 
             var seed = rand.int(1000);
-            var gridCount = rand.int(20);
+            var gridCount = rand.range(10,20);
             for(var i = 3; i < gridCount; i++) {
                     let params = {
                         width:rand.range(14,20),
@@ -310,8 +368,8 @@ let world = {
         },
         createFormation2:function() {
             var origin = {
-                x:rand.range(100,canvas.width/1.2),
-                y:rand.range(100,canvas.height/1.2),
+                x:rand.range(100,canvas.width/1.5),
+                y:rand.range(100,canvas.height/1.5),
                 color_r:190,
                 color_g:50,
                 color_b:252,
@@ -319,7 +377,7 @@ let world = {
             };
 
             var seed = rand.int(1000);
-            var gridCount = rand.int(20);
+            var gridCount = rand.range(5,25);
             for(var i = 3; i < gridCount; i++) {
                     let params = {
                         width:rand.range(8,15),
@@ -344,8 +402,8 @@ let world = {
         },
         createFormation3:function(){
             var origin = {
-                x:rand.range(100,canvas.width/1.2),
-                y:rand.range(100,canvas.height/1.2),
+                x:rand.range(100,canvas.width/1.5),
+                y:rand.range(100,canvas.height/1.5),
                 color_r:190,
                 color_g:214,
                 color_b:0,
@@ -353,7 +411,7 @@ let world = {
             };
 
             var seed = rand.int(1000);
-            var gridCount = rand.int(20);
+            var gridCount = rand.range(5,20);
             for(var i = 3; i < gridCount; i++) {
                     let params = {
                         width:rand.range(8,15),
@@ -464,6 +522,13 @@ let world = {
 //
 on('tick',function(){
     world.frameCount ++;
+    if(typeof pawn.comboCounter !='undefined'){
+        if(pawn.comboCounter>0){
+            pawn.comboCounter -=1;
+        }else {
+            pawn.comboTimes = 1;
+        }
+    }
 });
 
 
@@ -637,8 +702,11 @@ let pawn = Sprite({
     // custom params
     v_speed:0,
     h_speed:0,
+    lives:3,
     weight:1,
     fireDelay:5,
+    comboCounter:0,
+    comboTimes:1,
     fireDelayCount:0,
     type:'pawn',
     alive:true,
@@ -665,6 +733,12 @@ let pawn = Sprite({
         }
 
         gameAudio.pawnDie();
+        if(pawn.lives>0){
+            pawn.lives -=1;
+            world.updateLives();
+        }else {
+            world.gameOver = true;
+        }
     }
     
 });
@@ -741,6 +815,11 @@ image.onload = function() {
     pawn.image = image;
 
 };
+let lifeImage = new Image();
+lifeImage.src = lifeIdle;
+lifeImage.onload = function() {
+    world.updateLives();
+}
 
 let powerupImage = new Image();
 
@@ -800,7 +879,7 @@ world.scoreSprite = [];
           x:200,
           y:100
       };
-    for(var i = 0; i <6;i++) {
+    for(var i = 0; i <8;i++) {
         world.scoreSprite[i] = Sprite({
             x: origin.x-(i*21),
             y: origin.y,
@@ -1015,6 +1094,11 @@ let loop = GameLoop({  // create the main game loop
             }
         }
         if (keyPressed('space')){
+            if(!pawn.alive && world.gameOver) {
+                world.restartGame();
+            } else if(!pawn.alive){
+                world.initPlayer();
+            }
             if(pawn.fireDelayCount > pawn.fireDelay) {
                     
                 let bullet = new Bullet({
@@ -1024,6 +1108,10 @@ let loop = GameLoop({  // create the main game loop
                 world.gravityBoundObjects.push(bullet.sprite);
                 // fire gun
                 gameAudio.fire();
+                if(world.bullets.length>30)
+                {
+                    world.bullets.shift();
+                }
                 world.bullets.push(bullet);
                 pawn.fireDelayCount = 0;
             } else {
@@ -1103,6 +1191,11 @@ let loop = GameLoop({  // create the main game loop
      world.renderBGSprites();
      // render kill points 
      world.renderKillPoints();
+
+     // update the lives icons
+     for(var i in world.lifeSprites){
+        world.lifeSprites[i].render();
+     }
 
     //   // render the visgrid
     //   for(var i in visgrid.dots)

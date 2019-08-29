@@ -67,7 +67,28 @@ let gameAudio = {
       
       
     },
-    enemyDie1:function() {
+    freeLife:function(){
+      (function () {
+        let a = new AudioContext
+  
+        let D = [];
+        for(let i in D=[[11,1],[11,3],[12,2],[15,2],[16,1],[16,3]])
+        {
+          let o = a.createOscillator()
+          if(D[i])
+          {
+              o.connect(a.destination)
+              o.frequency.value=440*1.06**(14-D[i][0])
+              o.type='triangle'
+              o.start(D[i][1]*.1)
+              o.stop(D[i][1]*.1+.1);
+          }
+        }
+      })();
+      
+    },
+    enemyDie1:function(comboTimes) {
+      if(!comboTimes) comboTimes = 1;
         (function () {
             let a = new AudioContext
       
@@ -78,7 +99,7 @@ let gameAudio = {
               if(D[i])
               {
                   o.connect(a.destination)
-                  o.frequency.value=190*1.06**(14-D[i][0])
+                  o.frequency.value=(190+(30*comboTimes))*1.06**(14-D[i][0])
                   o.type='triangle'
                   o.start(D[i][1]*.04)
                   o.stop(D[i][1]*.04+.04);
