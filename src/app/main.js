@@ -9,14 +9,14 @@ import detroIdle from './assets/detro-title.png';
 import keysIdle from './assets/keys.png';
 
 initKeys();
-let { canvas, context } = init();
+var { canvas, context } = init();
 
 //
 // Define World Params and state methods
 //
 
 
-let world = {
+var world = {
     timeSeq: 0.1,
     frameCount: 0,
     score: 0,
@@ -328,7 +328,7 @@ let world = {
 
             },
             explode: function (enemy) {
-                let particleCount = 10;
+                var particleCount = 10;
 
                 for (var i = 0; i < particleCount; i++) {
                     world.level.push(Sprite({
@@ -347,7 +347,7 @@ let world = {
                 }
             },
             render: function () {
-                for (let ent in world.enemies) {
+                for (var ent in world.enemies) {
                     if (!world.enemies[ent].sprite.destroy) {
                         world.enemies[ent].sprite.render();
                     }
@@ -384,7 +384,7 @@ let world = {
 
             var gridCount = rand.range(10, enemyLimit);
             for (var i = 3; i < gridCount; i++) {
-                let params = {
+                var params = {
                     width: rand.range(14, 20),
                     height: rand.range(14, 20),
                     x: origin.x + (seed * Math.cos(seed * Math.PI * i / gridCount)) / 5,
@@ -420,7 +420,7 @@ let world = {
 
             var gridCount = rand.range(5, enemyLimit);
             for (var i = 3; i < gridCount; i++) {
-                let params = {
+                var params = {
                     width: rand.range(8, 15),
                     height: rand.range(8, 15),
                     x: origin.x + (seed * Math.cos(seed * Math.PI * i / gridCount) * Math.sin(seed * Math.PI * i / gridCount)) / 5,
@@ -456,7 +456,7 @@ let world = {
 
             var gridCount = rand.range(5, enemyLimit);
             for (var i = 3; i < gridCount; i++) {
-                let params = {
+                var params = {
                     width: rand.range(8, 15),
                     height: rand.range(8, 15),
                     x: (origin.x) + i * 15,
@@ -479,10 +479,10 @@ let world = {
         },
 
         enemyAIUpdate: function () {
-            for (let enemyID in world.enemies) {
-                let enemy = world.enemies[enemyID];
+            for (var enemyID in world.enemies) {
+                var enemy = world.enemies[enemyID];
                 if (enemy.sprite.type == 'enemyA') {
-                    let Ncos, Nsin;
+                    var Ncos, Nsin;
                     enemy.theta_increment += 0.02;
                     enemy.beta = Math.cos(enemy.theta_increment);
                     enemy.alpha = Math.sin(enemy.theta_increment / 2);
@@ -517,8 +517,8 @@ let world = {
         // }),
     ],
     updateLevelEntities: function () {
-        for (let i in world.level) {
-            let el = world.level[i];
+        for (var i in world.level) {
+            var el = world.level[i];
             if (el.h_speed != 0 && typeof el.h_speed != 'undefined') {
                 el.x += el.h_speed;
             }
@@ -531,7 +531,7 @@ let world = {
     bullets: [],
     enemies: [],
     updateBullets: function () {
-        for (let bullet in this.bullets) {
+        for (var bullet in this.bullets) {
             this.bullets[bullet].sprite.h_speed -= 0.1;
 
             this.bullets[bullet].sprite.x += this.bullets[bullet].sprite.h_speed;
@@ -540,7 +540,7 @@ let world = {
         }
     },
     updateGravity: function (entities) {
-        for (let gravObj in entities) {
+        for (var gravObj in entities) {
 
             entities[gravObj].v_speed = (entities[gravObj].v_speed) + (this.params.gravity * entities[gravObj].weight);
             entities[gravObj].y = entities[gravObj].y + entities[gravObj].v_speed;
@@ -579,7 +579,7 @@ on('tick', function () {
 // Define Power Up
 //
 
-let powerup = {
+var powerup = {
     active: false,
     powerShields: [],
     activatePowerShields: function () {
@@ -765,7 +765,7 @@ let powerup = {
 // Define Game Entities
 //
 
-let pawn = Sprite({
+var pawn = Sprite({
     x: canvas.width / 2,
     y: 0,
     width: 40,
@@ -798,7 +798,7 @@ let pawn = Sprite({
 
     },
     death: function () {
-        let particleCount = 10;
+        var particleCount = 10;
         powerup.powerShields = [];
 
         for (var i = 0; i < particleCount; i++) {
@@ -901,14 +901,14 @@ class Bullet {
 // Load Image Assets and assign to objects
 //
 
-let image = new Image();
+var image = new Image();
 image.src = pawnIdle;
 image.onload = function () {
     pawn.image = image;
 
 };
 
-let keysImage = new Image();
+var keysImage = new Image();
 keysImage.src = keysIdle;
 
 keysImage.onload = function () {
@@ -922,7 +922,7 @@ keysImage.onload = function () {
     });
 }
 
-let detroImage = new Image();
+var detroImage = new Image();
 detroImage.src = detroIdle;
 detroImage.onload = function () {
     world.detro = Sprite({
@@ -937,13 +937,13 @@ detroImage.onload = function () {
 
 
 
-let lifeImage = new Image();
+var lifeImage = new Image();
 lifeImage.src = lifeIdle;
 lifeImage.onload = function () {
     world.updateLives();
 }
 
-let powerupImage = new Image();
+var powerupImage = new Image();
 
 powerupImage.src = powerupIdle;
 powerupImage.onload = function () {
@@ -952,7 +952,7 @@ powerupImage.onload = function () {
 
 }
 
-let fontSheetImage = new Image();
+var fontSheetImage = new Image();
 fontSheetImage.src = fontSheet;
 fontSheetImage.onload = function () {
     world.fontSheet = SpriteSheet({
@@ -1117,7 +1117,7 @@ world.initBGSprites();
 //
 
 
-let loop = GameLoop({  // create the main game loop
+var loop = GameLoop({  // create the main game loop
     fps: 60,
     update: function () { // update the game state
         pawn.update();
@@ -1161,7 +1161,7 @@ let loop = GameLoop({  // create the main game loop
             }
             if (pawn.fireDelayCount > pawn.fireDelay) {
 
-                let bullet = new Bullet({
+                var bullet = new Bullet({
                     x: pawn.x + 35,
                     y: pawn.y + 10
                 });
@@ -1220,12 +1220,12 @@ let loop = GameLoop({  // create the main game loop
         }
         world.enemyAI.enemyA.render();
 
-        for (let ent in world.bullets) {
+        for (var ent in world.bullets) {
             if (!world.bullets[ent].sprite.destroy) {
                 world.bullets[ent].sprite.render();
             }
         }
-        for (let ent in world.level) {
+        for (var ent in world.level) {
 
             //fade particles 
             if (world.level[ent].type == 'particle') {
