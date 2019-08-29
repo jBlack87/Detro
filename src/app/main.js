@@ -63,6 +63,7 @@ let world = {
         pawn.h_speed = 0;
         pawn.v_speed = 0;
         pawn.y = 0;
+        world.frameCount = 0;
         world.detro.active = false;
 
         world.score = 0;
@@ -185,7 +186,7 @@ let world = {
 
                 for (var i in powerup.powerShields) {
                     var pawnShield = powerup.powerShields[i];
-                    if (pawnShield.collidesWith(world.enemies[enemyID].sprite)) {
+                    if (typeof world.enemies[enemyID] != 'undefined' && pawnShield.collidesWith(world.enemies[enemyID].sprite)) {
 
                         world.enemyAI.enemyA.explode(world.enemies[enemyID]);
                         world.enemies.splice(enemyID, 1);
@@ -232,7 +233,9 @@ let world = {
                             gameAudio.freeLife();
                             pawn.comboTimes = 1;
                             pawn.comboCounter = 0;
-                            pawn.lives += 1;
+                            if(pawn.lives<6){
+                                pawn.lives += 1;
+                            }
                             world.updateLives();
                         }
 
@@ -352,7 +355,8 @@ let world = {
             }
         },
         increaseDificulty: function () {
-            if (world.enemies.length < 10) {
+                var enemyLimit = Math.ceil(10+(world.frameCount/1000));
+            if (world.enemies.length < enemyLimit) {
                 var seed = rand.int(4);
                 if (seed < 2) {
                     world.enemyAI.createFormation();
@@ -376,7 +380,9 @@ let world = {
             };
 
             var seed = rand.int(1000);
-            var gridCount = rand.range(10, 20);
+            var enemyLimit = Math.ceil(20+(world.frameCount/2000));
+
+            var gridCount = rand.range(10, enemyLimit);
             for (var i = 3; i < gridCount; i++) {
                 let params = {
                     width: rand.range(14, 20),
@@ -410,7 +416,9 @@ let world = {
             };
 
             var seed = rand.int(1000);
-            var gridCount = rand.range(5, 25);
+            var enemyLimit = Math.ceil(25+(world.frameCount/1000));
+
+            var gridCount = rand.range(5, enemyLimit);
             for (var i = 3; i < gridCount; i++) {
                 let params = {
                     width: rand.range(8, 15),
@@ -444,7 +452,9 @@ let world = {
             };
 
             var seed = rand.int(1000);
-            var gridCount = rand.range(5, 20);
+            var enemyLimit = Math.ceil(20+(world.frameCount/3000));
+
+            var gridCount = rand.range(5, enemyLimit);
             for (var i = 3; i < gridCount; i++) {
                 let params = {
                     width: rand.range(8, 15),
@@ -774,6 +784,14 @@ let pawn = Sprite({
     comboCounter: 0,
     comboTimes: 1,
     fireDelayCount: 0,
+    jetpackBurn:Sprite({
+        x:0,
+        y:0,
+        width:6,
+        height:10,
+        color:'red',
+        active:false,
+    }),
     type: 'pawn',
     alive: false,
     activatePowerup: function () {
@@ -796,7 +814,10 @@ let pawn = Sprite({
                 v_speed: 10 * Math.sin(2 * Math.PI * i / particleCount),
                 type: 'particle2',
                 colorFade: 1,
-            }))
+            }));
+            if(world.level.length>100){
+                world.level.shift();
+            }
         }
 
         gameAudio.pawnDie();
@@ -805,6 +826,7 @@ let pawn = Sprite({
             world.updateLives();
         } else {
             world.gameOver = true;
+            world.frameCount = 0;
             world.detro.active = true;
         }
     }
@@ -1111,6 +1133,9 @@ let loop = GameLoop({  // create the main game loop
             if (pawn.v_speed > -5) {
                 pawn.v_speed -= 0.5;
             }
+            pawn.jetpackBurn.active = true;
+        }else {
+            pawn.jetpackBurn.active = false;
         }
         if (keyPressed('right')) {
             if (pawn.h_speed < 5) {
@@ -1129,7 +1154,7 @@ let loop = GameLoop({  // create the main game loop
             }
         }
         if (keyPressed('space')) {
-            if (!pawn.alive && world.gameOver) {
+            if (!pawn.alive && world.gameOver ) {
                 world.restartGame();
             } else if (!pawn.alive) {
                 world.initPlayer();
@@ -1182,11 +1207,16 @@ let loop = GameLoop({  // create the main game loop
         }
 
 
-
+        pawn.jetpackBurn.x = pawn.x+2;
+        pawn.jetpackBurn.y = pawn.y+37;
+        
     },
     render: function () { // render the game state
         if (pawn.alive) {
             pawn.render();
+            if(pawn.jetpackBurn.active){
+                pawn.jetpackBurn.render();
+            }
         }
         world.enemyAI.enemyA.render();
 
