@@ -5,6 +5,7 @@ import rand from './rand';
 import fontSheet from './assets/number-sheet.png';
 import powerupIdle from './assets/powerup.png';
 import lifeIdle from './assets/life.png';
+import detroIdle from './assets/detro-title.png';
 
 initKeys();
 let { canvas,context } = init();
@@ -26,6 +27,7 @@ let world = {
             y:0,
         }
     },
+    
     lifeSprites:[],
     updateLives:function(){
         var origin = {
@@ -46,13 +48,22 @@ let world = {
         pawn.x = canvas.width/2;
         pawn.y = 0;
         world.bullets = [];
+        pawn.h_speed = 0;
+        pawn.v_speed = 0;
+        if(world.detro){
+            world.detro.active = false;
+        }
 
     },
     restartGame:function(){
         pawn.alive = true;
         world.gameOver = false;
         pawn.x = canvas.width/2;
+        pawn.h_speed = 0;
+        pawn.v_speed = 0;
         pawn.y = 0;
+        world.detro.active = false;
+
         world.score = 0;
         pawn.lives = 3;
         for(var i = 0; i < 8; i++) {
@@ -149,11 +160,12 @@ let world = {
     checkForCollisions:function(){
 
 
-        if(pawn.collidesWith(powerup.sprite) && powerup.active){
+        if(pawn.collidesWith(powerup.sprite) && powerup.active && pawn.alive){
             pawn.hasPowerup = true;
             pawn.activatePowerup();
             powerup.active = false;
             gameAudio.powerup();
+            powerup.activatePowerShields();
         }
 
 
@@ -169,8 +181,23 @@ let world = {
                     pawn.alive = false;
                 }
             }
+            
+            if(typeof world.enemies[enemyID] != 'undefined') {
 
-           
+                for(var i in powerup.powerShields){
+                    var pawnShield = powerup.powerShields[i];
+                    if(pawnShield.collidesWith(world.enemies[enemyID].sprite)) {
+
+                        world.enemyAI.enemyA.explode(world.enemies[enemyID]);
+                        world.enemies.splice(enemyID,1);
+                        powerup.powerShields.splice(i,1);
+                        gameAudio.enemyDie1(pawn.comboTimes);
+
+                        world.enemyAI.increaseDificulty();
+
+                    }
+                }
+            }
             
             for(var bulletID in world.bullets){
                 if(typeof world.bullets[bulletID] != 'undefined') {
@@ -195,6 +222,13 @@ let world = {
 
                         }
                         pawn.comboCounter +=30;
+                        
+                        if(pawn.comboTimes >10 && !powerup.active && powerup.powerShields.length<1) {
+                            powerup.active = true;
+                            powerup.showPowerup({x:rand.range(200,canvas.width/1.5),y:rand.range(200,canvas.height/1.5)});
+                            
+                        }
+                        
                         if(pawn.comboTimes >15) {
                             gameAudio.freeLife();
                             pawn.comboTimes = 1;
@@ -538,6 +572,40 @@ on('tick',function(){
 
 let powerup = {
     active:false,
+    powerShields:[],
+    activatePowerShields:function(){
+        var shieldCount = 20;
+        for(var i = 0; i<shieldCount;i++) {
+            powerup.powerShields.push(Sprite({
+                x:pawn.x+Math.cos(2*Math.PI*i),
+                y:pawn.y+Math.sin(2*Math.PI*i),
+                width:10,
+                height:10,
+                color:'RGBA(220, 81, 252, 1.00)'
+            }));
+        }
+
+        
+        
+    },
+    updatePowerShield:function(){
+        for(var i in powerup.powerShields){
+            var pawnShield = powerup.powerShields[i];
+
+             pawnShield.x = pawn.x+10+(Math.cos( world.frameCount/(20*i))*80 * Math.cos(2 * Math.PI * 5 / (100)))
+            pawnShield.y = pawn.y+30+(Math.sin( world.frameCount/(20*i))*200 * Math.sin(2 * Math.PI * 5 / (100)))
+        }
+    },
+    renderPowerShields:function(){
+
+        for(var i in powerup.powerShields){
+                powerup.powerShields[i].render();
+
+            }
+           
+        
+
+    },
     sprite:Sprite({
         x:0,
         y:100,
@@ -709,12 +777,13 @@ let pawn = Sprite({
     comboTimes:1,
     fireDelayCount:0,
     type:'pawn',
-    alive:true,
+    alive:false,
     activatePowerup:function(){
 
     },
     death:function() {
         let particleCount = 10;
+        powerup.powerShields = [];
 
         for(var i =0; i < particleCount; i++) {
             world.level.push(Sprite({
@@ -738,10 +807,13 @@ let pawn = Sprite({
             world.updateLives();
         }else {
             world.gameOver = true;
+            world.detro.active = true;
         }
     }
     
 });
+
+
 
 
 class EnemyA {
@@ -815,6 +887,22 @@ image.onload = function() {
     pawn.image = image;
 
 };
+
+let detroImage = new Image();
+detroImage.src = detroIdle;
+detroImage.onload = function(){
+world.detro = Sprite({
+        image:detroImage,
+        width:canvas.width/3,
+        height:(canvas.width/3)/3.47,
+        x:canvas.width/3,
+        y:canvas.height/2.5,
+        active:true,
+    });
+};
+
+
+
 let lifeImage = new Image();
 lifeImage.src = lifeIdle;
 lifeImage.onload = function() {
@@ -1119,8 +1207,6 @@ let loop = GameLoop({  // create the main game loop
             }
         }
 
-     
-
       // move pawn horizontally
 
       pawn.x = pawn.x + pawn.h_speed;
@@ -1142,6 +1228,8 @@ let loop = GameLoop({  // create the main game loop
       world.updateLevelEntities();
       // collision checks 
       world.checkForCollisions();
+
+      powerup.updatePowerShield();
 
       if(world.scoreSprite) {
         world.updateScoreSprite();
@@ -1191,10 +1279,18 @@ let loop = GameLoop({  // create the main game loop
      world.renderBGSprites();
      // render kill points 
      world.renderKillPoints();
+    // render the power shields
+    powerup.renderPowerShields();
 
      // update the lives icons
      for(var i in world.lifeSprites){
         world.lifeSprites[i].render();
+     }
+
+     if(world.detro) {
+         if(world.detro.active) {
+            world.detro.render();
+         }
      }
 
     //   // render the visgrid
