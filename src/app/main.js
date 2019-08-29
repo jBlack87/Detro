@@ -6,6 +6,7 @@ import fontSheet from './assets/number-sheet.png';
 import powerupIdle from './assets/powerup.png';
 import lifeIdle from './assets/life.png';
 import detroIdle from './assets/detro-title.png';
+import keysIdle from './assets/keys.png';
 
 initKeys();
 let { canvas,context } = init();
@@ -731,7 +732,6 @@ let powerup = {
         powerup.sprite.originx = origin.x;
         powerup.sprite.originy = origin.y;
         
-        console.log(powerup);
     },
     renderPowerup:function(){
         if(powerup.active) {
@@ -888,6 +888,20 @@ image.onload = function() {
 
 };
 
+let keysImage = new Image();
+keysImage.src = keysIdle;
+
+keysImage.onload = function(){
+    world.keys = Sprite({
+        image:keysImage,
+        width:canvas.width/4,
+        height:(canvas.width/4)/3.22,
+        x:canvas.width/2.75,
+        y:canvas.height/1.5,
+        active:true,
+    });
+}
+
 let detroImage = new Image();
 detroImage.src = detroIdle;
 detroImage.onload = function(){
@@ -914,7 +928,7 @@ let powerupImage = new Image();
 powerupImage.src = powerupIdle;
 powerupImage.onload = function(){
     powerup.sprite.image = powerupImage;
-    powerup.showPowerup({x:canvas.width/3,y:canvas.width/3});
+    powerup.showPowerup({x:rand.range(200,canvas.width/1.15),y:rand.range(200,canvas.height/1.5)});
 
 }
 
@@ -1290,6 +1304,9 @@ let loop = GameLoop({  // create the main game loop
      if(world.detro) {
          if(world.detro.active) {
             world.detro.render();
+            if(world.keys){
+                world.keys.render();
+            }
          }
      }
 
