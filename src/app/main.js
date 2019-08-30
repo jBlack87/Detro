@@ -8,9 +8,12 @@ import lifeIdle from './assets/life.png';
 import detroIdle from './assets/detro-title.png';
 import keysIdle from './assets/keys.png';
 import alphaSheetIdle from './assets/alpha-sheet.png';
+import downArrowIdle from './assets/down_arrow.png';
 
 initKeys();
 var { canvas, context } = init();
+
+
 
 //
 // Define World Params and state methods
@@ -27,9 +30,72 @@ var world = {
         pawnStart: {
             x: canvas.width / 2,
             y: 0,
+        },
+        superPowerMinCount: 4,
+    },
+    collectables: [],
+    createCollectable: function (origin) {
+
+        var params = {
+            color_r: 182,
+            color_b: 6,
+            color_g: 255,
+            color_a: 1,
+            h_speed: 0,
+            v_speed: 0,
+            x: origin.x,
+            y: origin.y,
+            lifespan: 200 + world.collectables.length,
+        };
+
+        world.collectables.push(new Collectable(params));
+        if (world.collectables.length > 100) world.collectables.shift();
+    },
+    updateCollectables: function () {
+        for (var id in world.collectables) {
+
+            var collectable = world.collectables[id];
+            collectable.sprite.color_r = collectable.sprite.origin_color_r + Math.round((3 * id) + (Math.cos(world.frameCount / 25) * 80 * Math.cos(2 * Math.PI * 2)));
+            collectable.sprite.color_b = collectable.sprite.origin_color_b + Math.round((3 * id) + (Math.cos(world.frameCount / 25) * 80 * Math.cos(2 * Math.PI * 2)));
+            collectable.sprite.color_g = collectable.sprite.origin_color_g + Math.round((3 * id) + (Math.cos(world.frameCount / 25) * 80 * Math.cos(2 * Math.PI * 2)));
+            collectable.sprite.color = 'RGBA(' + collectable.sprite.color_r + ',' + collectable.sprite.color_b + ',' + collectable.sprite.color_g + ',' + collectable.sprite.color_a + ')';
+
+
+            var collectableLocation = { x: collectable.sprite.x, y: collectable.sprite.y };
+            var pawnLocation = { x: pawn.x, y: pawn.y };
+
+            if (rand.distance(collectableLocation, pawnLocation) < (canvas.width / 6)) {
+                // move collectable towards pawn 
+                collectable.sprite.h_speed += 0.1;
+                collectable.sprite.v_speed += 0.1;
+                var angle = Math.atan2(pawnLocation.y, pawnLocation.x);
+                var xDiff = 1;
+                var yDiff = 1;
+                if (pawnLocation.x < collectableLocation.x) xDiff = -1;
+                if (pawnLocation.y < collectableLocation.y) yDiff = -1;
+
+                if (Math.abs(collectable.sprite.x - (collectable.sprite.h_speed * Math.cos(angle)) * xDiff) > 10) {
+                    collectable.sprite.x += (collectable.sprite.h_speed * Math.cos(angle)) * xDiff;
+
+                }
+                if (Math.abs(collectable.sprite.y - (collectable.sprite.v_speed * Math.sin(angle)) * yDiff) > 10) {
+                    collectable.sprite.y += (collectable.sprite.v_speed * Math.sin(angle)) * yDiff;
+
+                }
+
+            } else {
+                if (collectable.sprite.h_speed > 0) collectable.sprite.h_speed -= 0.1;
+                if (collectable.sprite.v_speed > 0) collectable.sprite.v_speed -= 0.1;
+                collectable.sprite.y = collectable.sprite.originy + (3 * id) + (Math.cos(world.frameCount / 25) * 30 * Math.cos(2 * Math.PI * 2 / (10)));
+
+                collectable.sprite.lifespan -= 1;
+                if (collectable.sprite.lifespan <= 0) {
+                    world.collectables.splice(id, 1);
+                }
+            }
+
         }
     },
-
     lifeSprites: [],
     updateLives: function () {
         var origin = {
@@ -50,6 +116,7 @@ var world = {
         pawn.canBeKilled = false;
         pawn.godModeCount = 120;
         pawn.x = canvas.width / 2;
+        pawn.superPower = 0;
         pawn.y = 0;
         world.bullets = [];
         pawn.h_speed = 0;
@@ -171,7 +238,21 @@ var world = {
             powerup.activatePowerShields();
         }
 
-
+        for (var id in world.collectables) {
+            if (world.collectables[id].sprite.collidesWith(pawn)) {
+                pawn.superPower += 1;
+                world.collectables.splice(id, 1);
+                gameAudio.collectable();
+                if (pawn.superPower > 40) {
+                    if (typeof world.downArrow != 'undefined') {
+                        world.downArrow.playAnimation('play');
+                        if (pawn.alive) {
+                            world.downArrow.active = true;
+                        }
+                    }
+                }
+            }
+        }
 
         // check for collisions between enemies and bullets
         for (var enemyID in world.enemies) {
@@ -258,13 +339,13 @@ var world = {
 
                         } else {
                             world.enemies[enemyID].sprite.life -= 1;
-                                world.enemies[enemyID].sprite.color = 'RGBA('+Number(world.enemies[enemyID].sprite.color_r+10)+','+Number(world.enemies[enemyID].sprite.color_b+10)+','+Number(world.enemies[enemyID].sprite.color_g+10)+',1)';
-                                world.enemies[enemyID].sprite.width += 10;
-                                world.enemies[enemyID].sprite.height += 10;
-                                world.enemies[enemyID].sprite.x -= 5;
-                                world.enemies[enemyID].sprite.y -= 5;
+                            world.enemies[enemyID].sprite.color = 'RGBA(' + Number(world.enemies[enemyID].sprite.color_r + 10) + ',' + Number(world.enemies[enemyID].sprite.color_b + 10) + ',' + Number(world.enemies[enemyID].sprite.color_g + 10) + ',1)';
+                            world.enemies[enemyID].sprite.width += 10;
+                            world.enemies[enemyID].sprite.height += 10;
+                            world.enemies[enemyID].sprite.x -= 5;
+                            world.enemies[enemyID].sprite.y -= 5;
 
-                            
+
                         }
 
 
@@ -351,6 +432,13 @@ var world = {
             killPointArray[parseInt(i)].playAnimation('f_' + scoreString[i]);
         }
         world.killPoints.push(killPointArray);
+        if (world.killPoints.length > 40) {
+            world.killPoints.shift();
+        }
+
+        // add collectables
+        world.createCollectable(origin);
+
     },
     renderKillPoints: function () {
         for (var i in world.killPoints) {
@@ -411,7 +499,7 @@ var world = {
                 for (var ent in world.enemies) {
                     if (!world.enemies[ent].sprite.destroy) {
                         world.enemies[ent].sprite.render();
-                        
+
                     }
                 }
             }
@@ -424,9 +512,9 @@ var world = {
                     world.enemyAI.createFormation();
                 } else if (seed >= 3 && seed < 4) {
                     world.enemyAI.createFormation2();
-                    if(world.frameCount >50000 && world.coil) {
+                    if (world.frameCount > 50000) {
                         var seed2 = rand.int(5);
-                        if(seed2 >3 && seed2 <5){
+                        if (seed2 > 3 && seed2 < 5) {
                             world.enemyAI.createBoss1();
                         }
 
@@ -767,8 +855,9 @@ var world = {
         }
     },
     updateGravity: function (entities) {
+        var isPawn = false;
         for (var gravObj in entities) {
-
+            if (entities[gravObj].type == 'pawn') isPawn = true;
             entities[gravObj].v_speed = (entities[gravObj].v_speed) + (this.params.gravity * entities[gravObj].weight);
             entities[gravObj].y = entities[gravObj].y + entities[gravObj].v_speed;
 
@@ -783,6 +872,15 @@ var world = {
                     entities[gravObj].ypos = this.params.pawnStart.y;
                 }
             }
+        }
+
+        // check to see size of array, limit the max size 
+        if (world.gravityBoundObjects.length > 500) {
+            world.gravityBoundObjects.shift();
+        }
+        if (!isPawn) {
+            world.gravityBoundObjects.push(pawn);
+
         }
     }
 };
@@ -1018,6 +1116,7 @@ var pawn = Sprite({
     v_speed: 0,
     h_speed: 0,
     lives: 3,
+    superPower: 0,
     weight: 1,
     fireDelay: 5,
     comboCounter: 0,
@@ -1039,7 +1138,7 @@ var pawn = Sprite({
     death: function () {
         var particleCount = 10;
         powerup.powerShields = [];
-
+        world.downArrow.active = false;
         for (var i = 0; i < particleCount; i++) {
             world.level.push(Sprite({
                 x: pawn.x,
@@ -1072,8 +1171,39 @@ var pawn = Sprite({
 
 });
 
+var superPower = {
+    superPowerParts: [],
+    superPowerInit: function () {
+        var shieldPartsCount = 40;
 
+    },
+    superPowerUpdate: function () { },
+    superPowerRender: function () { },
+};
 
+class Collectable {
+    constructor(params) {
+        this.sprite = Sprite({
+            width: 5,
+            height: 5,
+            color: 'RGBA(' + params.color_r + ',' + params.color_b + ',' + params.color_g + ',' + params.color_a + ')',
+            color_r: params.color_r,
+            color_g: params.color_b,
+            color_b: params.color_g,
+            lifespan: params.lifespan,
+            origin_color_r: params.color_r,
+            origin_color_g: params.color_b,
+            origin_color_b: params.color_g,
+            color_a: params.color_a,
+            x: params.x,
+            y: params.y,
+            originx: params.x,
+            originy: params.y,
+            h_speed: params.h_speed,
+            v_speed: params.v_speed,
+        });
+    }
+}
 
 class EnemyA {
     constructor(params) {
@@ -1151,6 +1281,38 @@ image.onload = function () {
     pawn.image = image;
 
 };
+
+var downArrowImage = new Image();
+downArrowImage.src = downArrowIdle;
+
+downArrowImage.onload = function () {
+    world.downArrowSpriteSheet = SpriteSheet({
+        image: downArrowImage,
+        frameWidth: 9,
+        frameHeight: 10,
+        frameMargin: 0,
+    });
+
+    world.downArrowSpriteSheet.createAnimations({
+        play: {
+            frames: [0, 1],
+            frameRate: 2,
+            loop: true,
+        },
+        stop: {
+            frames: [1, 2],
+        }
+    });
+
+    world.downArrow = Sprite({
+        x: 200,
+        y: 200,
+        width: 30,
+        height: 30,
+        active: false,
+        animations: world.downArrowSpriteSheet.animations,
+    });
+}
 
 var keysImage = new Image();
 keysImage.src = keysIdle;
@@ -1436,6 +1598,27 @@ var loop = GameLoop({  // create the main game loop
                 //  pawn.rotation -=0.05;
             }
         }
+        if (keyPressed('down') && world.downArrow.active) {
+
+            pawn.superPower = 0;
+            world.downArrow.active = false;
+            world.bullets = [];
+            gameAudio.enemyDie1();
+            for (var enemyID in world.enemies) {
+
+
+                world.enemyAI.enemyA.explode(world.enemies[enemyID]);
+
+
+
+                world.createKillPoints(world.enemyAI.enemyPointValue[world.enemies[enemyID].sprite.type] * pawn.comboTimes, { x: world.enemies[enemyID].sprite.x, y: world.enemies[enemyID].sprite.y });
+                world.score += world.enemyAI.enemyPointValue[world.enemies[enemyID].sprite.type] * pawn.comboTimes;
+
+            }
+            world.enemies = [];
+            world.enemyAI.increaseDificulty();
+        }
+
         if (keyPressed('space')) {
             if (!pawn.alive && world.gameOver) {
                 world.restartGame();
@@ -1489,10 +1672,19 @@ var loop = GameLoop({  // create the main game loop
             world.updateScoreSprite();
         }
 
+        world.updateCollectables();
 
         pawn.jetpackBurn.x = pawn.x + 2;
         pawn.jetpackBurn.y = pawn.y + 37;
 
+        // update position of down arrow indicator
+        if (typeof world.downArrow != 'undefined') {
+            if (world.downArrow.active) {
+                world.downArrow.x = pawn.x;
+                world.downArrow.y = pawn.y - 45;
+
+            }
+        }
     },
     render: function () { // render the game state
         if (pawn.alive) {
@@ -1544,6 +1736,18 @@ var loop = GameLoop({  // create the main game loop
         // update the lives icons
         for (var i in world.lifeSprites) {
             world.lifeSprites[i].render();
+        }
+
+        // render collectables
+        for (var id in world.collectables) {
+            world.collectables[id].sprite.render();
+        }
+
+        // render down arrow indicator
+        if (typeof world.downArrow != 'undefined') {
+            if (world.downArrow.active) {
+                world.downArrow.render();
+            }
         }
 
         if (world.detro) {

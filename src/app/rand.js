@@ -17,6 +17,21 @@ exports.int = function (max) {
 };
 
 /**
+ * Return the distance between two points
+ */
+
+ exports.distance = function(obj1,obj2) {
+
+  var a = obj1.x - obj2.x;
+  var b = obj1.y - obj2.y;
+  
+  var distance = Math.sqrt( a*a + b*b );
+  
+  return distance;
+ }
+
+
+/**
  * Return a float within [0.0, 1.0).
  *
  * @return {float}

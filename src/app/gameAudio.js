@@ -26,6 +26,26 @@ let gameAudio = {
           
 
     },
+    collectable:function(){
+      (function () {
+        let a = new AudioContext
+  
+        let D = [];
+        for(let i in D=[[7,2],[12,1],[14,1]])
+        {
+          let o = a.createOscillator()
+          if(D[i])
+          {
+              o.connect(a.destination)
+              o.frequency.value=200*1.06**(14-D[i][0])
+              
+              o.start(D[i][1]*.1)
+              o.stop(D[i][1]*.1+.1);
+          }
+        }
+      })();
+      
+    },
     powerup:function(){
       (function () {
         let a = new AudioContext
