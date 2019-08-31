@@ -1601,8 +1601,10 @@ var loop = GameLoop({  // create the main game loop
 
         if (keyPressed('space')) {
             if (!pawn.alive && world.gameOver) {
-                world.restartGame();
-            } else if (!pawn.alive) {
+                if(world.frameCount > 180){
+                    world.restartGame();
+                }
+            } else if (!pawn.alive ) {
                 world.initPlayer();
             }
             if (pawn.fireDelayCount > pawn.fireDelay) {
