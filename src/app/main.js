@@ -49,7 +49,6 @@ var world = {
         };
 
         world.collectables.push(new Collectable(params));
-        if (world.collectables.length > 100) world.collectables.shift();
     },
     updateCollectables: function () {
         for (var id in world.collectables) {
@@ -364,7 +363,6 @@ var world = {
     // Build String from sprites
     //
     createString: function (string, origin) {
-        var newStringArray = [];
 
         var stringText = String(string);
 
@@ -432,9 +430,7 @@ var world = {
             killPointArray[parseInt(i)].playAnimation('f_' + scoreString[i]);
         }
         world.killPoints.push(killPointArray);
-        if (world.killPoints.length > 40) {
-            world.killPoints.shift();
-        }
+       
 
         // add collectables
         world.createCollectable(origin);
@@ -1094,12 +1090,6 @@ if (document.monetization && document.monetization.state === 'started') {
     world.coil = true;
 }
 
-//
-// check if we are on a mobile device or desktop
-//
-if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-    world.mobile = true;
-}
 
 //
 // Define Game Entities
@@ -1153,9 +1143,7 @@ var pawn = Sprite({
                 type: 'particle2',
                 colorFade: 1,
             }));
-            if (world.level.length > 100) {
-                world.level.shift();
-            }
+
         }
 
         gameAudio.pawnDie();
@@ -1171,15 +1159,7 @@ var pawn = Sprite({
 
 });
 
-var superPower = {
-    superPowerParts: [],
-    superPowerInit: function () {
-        var shieldPartsCount = 40;
 
-    },
-    superPowerUpdate: function () { },
-    superPowerRender: function () { },
-};
 
 class Collectable {
     constructor(params) {
@@ -1759,6 +1739,17 @@ var loop = GameLoop({  // create the main game loop
             }
         }
 
+        // clean level objects, max 100
+        if (world.level.length > 100) {
+            world.level.shift();
+        }
+        if (world.collectables.length > 50) {
+            world.collectables.shift();
+        }
+
+        if (world.killPoints.length > 40) {
+            world.killPoints.shift();
+        }
 
     }
 });
