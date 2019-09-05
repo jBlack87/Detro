@@ -508,7 +508,7 @@ var world = {
                     world.enemyAI.createFormation();
                 } else if (seed >= 3 && seed < 4) {
                     world.enemyAI.createFormation2();
-                    if (world.frameCount > 50000) {
+                    if (world.frameCount > 16000) {
                         var seed2 = rand.int(5);
                         if (seed2 > 3 && seed2 < 5) {
                             world.enemyAI.createBoss1();
