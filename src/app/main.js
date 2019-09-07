@@ -325,7 +325,9 @@ var world = {
 
                         world.createKillPoints(world.enemyAI.enemyPointValue[world.enemies[enemyID].sprite.type] * pawn.comboTimes, { x: world.enemies[enemyID].sprite.x, y: world.enemies[enemyID].sprite.y });
                         world.score += world.enemyAI.enemyPointValue[world.enemies[enemyID].sprite.type] * pawn.comboTimes;
-
+                        if(typeof kongregate !='undefined'){
+                            kongregate.stats.submit("HighScore", world.score); // send highscore to kongregate API
+                        }
                         world.bullets.splice(bulletID, 1);
 
                         // check for life in the enemy, remove if dead, remove a life if it has more left
@@ -489,6 +491,9 @@ var world = {
                         type: 'particle',
                         colorFade: 1,
                     }))
+                }
+                if(typeof kongregate !='undefined'){
+                    kongregate.stats.submit("enemyKilled", 1); // send enemy killed to kongregate API
                 }
             },
             render: function () {
@@ -1154,6 +1159,9 @@ var pawn = Sprite({
             world.gameOver = true;
             world.frameCount = 0;
             world.detro.active = true;
+            if(typeof kongregate !='undefined'){
+                kongregate.stats.submit("GameOVer", 1); // send gameover to kongregate API
+            }
         }
     }
 
